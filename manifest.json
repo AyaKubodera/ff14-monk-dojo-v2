@@ -1,0 +1,23 @@
+
+{
+  "name": "モンク道場 LV100",
+  "short_name": "モンク道場",
+  "description": "FF14 モンクのスキル回しトレーニングアプリ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    {
+      "src": "https://fav.farm/👊",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://fav.farm/👊",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
