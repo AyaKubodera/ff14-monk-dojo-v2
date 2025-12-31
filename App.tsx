@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Form, RotationState, Skill, BeastChakraType, NadiType } from './types';
-import { MONK_SKILLS, INITIAL_ROTATION_STATE } from './constants';
+import { MONK_SKILLS, INITIAL_ROTATION_STATE, OPENER_SEQUENCE } from './constants';
 import SkillButton from './components/SkillButton';
 import StatsPanel from './components/StatsPanel';
 import { getMonkFeedback } from './services/geminiService';
@@ -9,17 +9,13 @@ import { sounds } from './services/soundService';
 
 const App: React.FC = () => {
   const [state, setState] = useState<RotationState>(INITIAL_ROTATION_STATE);
-  const [feedback, setFeedback] = useState<string>("道場へようこそ。画面をどこかタップして修行を開始せよ。");
+  const [canWinds, setCanWinds] = useState<boolean>(false);
+  const [feedback, setFeedback] = useState<string>("黄金のモンク道場へ。型を研ぎ澄ませ。");
   const [isThinking, setIsThinking] = useState<boolean>(false);
   const [isGCD, setIsGCD] = useState<boolean>(false);
   const [isError, setIsError] = useState<boolean>(false);
 
-  const unlockAudio = () => {
-    sounds.init();
-    if (feedback.includes("どこかタップして")) {
-      setFeedback("よし、まずは壱の型から。型の繋がりを体で覚えるのだ。");
-    }
-  };
+  const unlockAudio = () => sounds.init();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -37,80 +33,67 @@ const App: React.FC = () => {
   }, []);
 
   const currentBlitz = useMemo(() => {
-    // 3つのシンボルが貯まっている時だけ必殺技ボタンを有効化
     if (state.beastChakra.length < 3) return null;
     const types = new Set(state.beastChakra);
     
-    // 夢幻闘舞 (両方の那岐がある場合)
     if (state.nadi.includes(NadiType.Lunar) && state.nadi.includes(NadiType.Solar)) {
-      return { id: 'phantom_rush', name: '夢幻闘舞', icon: '🌪️', color: 'bg-gradient-to-r from-purple-600 to-indigo-700 shadow-[0_0_40px_rgba(139,92,246,0.6)]' };
+      return { id: 'phantom_rush', name: '夢幻闘舞', icon: '🌀', color: 'bg-gradient-to-br from-indigo-900 via-purple-600 to-indigo-950 border-purple-300 shadow-[0_0_40px_rgba(168,85,247,0.9)]' };
     }
-    
-    // 鳳凰の舞 (3種類バラバラ)
     if (types.size === 3) {
-      return { id: 'rising_phoenix', name: '鳳凰の舞', icon: '🔥', color: 'bg-gradient-to-r from-orange-600 to-red-700 shadow-[0_0_40px_rgba(249,115,22,0.6)]' };
+      return { id: 'rising_phoenix', name: '鳳凰の舞', icon: '🔥', color: 'bg-gradient-to-br from-orange-800 via-red-600 to-yellow-900 border-red-300 shadow-[0_0_40px_rgba(239,68,68,0.9)]' };
     }
-    
-    // 蒼気砲 (同じ種類3つ)
     if (types.size === 1) {
-      return { id: 'elixir_field', name: '蒼気砲', icon: '🌀', color: 'bg-gradient-to-r from-blue-600 to-cyan-700 shadow-[0_0_40px_rgba(59,130,246,0.6)]' };
+      return { id: 'elixir_burst', name: '爆裂脚', icon: '🦵', color: 'bg-gradient-to-br from-blue-900 via-cyan-500 to-blue-950 border-cyan-300 shadow-[0_0_40px_rgba(6,182,212,0.9)]' };
     }
-    
-    // 天回転 (それ以外)
-    return { id: 'celestial_revolution', name: '天回転', icon: '💫', color: 'bg-slate-500 shadow-xl' };
+    return { id: 'celestial_revolution', name: '天宙脚', icon: '💫', color: 'bg-slate-700 border-slate-500 opacity-60' };
   }, [state.beastChakra, state.nadi]);
 
-  const recommendedSkillId = useMemo(() => {
-    if (currentBlitz) return currentBlitz.id;
-    const { currentForm, buffs, beastChakra, chakraCount, nadi } = state;
+  const recommendation = useMemo(() => {
+    if (canWinds) return { id: 'winds_of_reply', reason: '追撃：真空波！' };
+    if (currentBlitz) return { id: currentBlitz.id, reason: currentBlitz.name === '天宙脚' ? '那岐ミス！' : '必殺技！' };
     
-    if (chakraCount === 5) return 'forbidden_chakra';
+    const { currentForm, buffs, beastChakra, chakraCount, history, phase, nadi } = state;
+    if (chakraCount === 5) return { id: 'forbidden_chakra', reason: '闘気全開' };
 
-    // 紅蓮の極意中、まだ踏鳴を使っていないなら「踏鳴」を推奨
-    if (buffs.riddleOfFire > 10 && buffs.perfectBalanceStacks === 0 && beastChakra.length === 0) {
-      return 'perfect_balance';
+    if (phase === 'opener') {
+      const openerStep = history.length;
+      if (openerStep < OPENER_SEQUENCE.length) {
+        return { id: OPENER_SEQUENCE[openerStep], reason: `開幕：${openerStep + 1}手目` };
+      }
     }
 
     if (buffs.perfectBalanceStacks > 0) {
-      const typesInChakra = new Set(beastChakra);
       const hasLunar = nadi.includes(NadiType.Lunar);
-      const hasSolar = nadi.includes(NadiType.Solar);
-      
-      // 真真回し対応: 両方の那岐があるなら、次は夢幻闘舞(なんでも良いが同じの3つが楽)
-      if (hasLunar && hasSolar) {
-        return 'dragon_kick'; 
-      }
-
-      // 月（同じ技3つ）を優先して取る
       if (!hasLunar) {
-        return 'dragon_kick'; 
+        return { id: buffs.leadenFist ? 'pouncing_barrage' : 'dragon_kick', reason: '蓄積（月）' };
       } else {
-        // 太陽（3種バラバラ）を取る
-        if (!typesInChakra.has(BeastChakraType.Opo)) return 'dragon_kick';
-        if (!typesInChakra.has(BeastChakraType.Raptor)) return 'twin_snakes';
-        return 'demolish';
+        const types = new Set(beastChakra);
+        if (!types.has(BeastChakraType.Opo)) return { id: 'dragon_kick', reason: '太陽（壱）' };
+        if (!types.has(BeastChakraType.Raptor)) return { id: 'twin_snakes', reason: '太陽（弐）' };
+        return { id: 'demolish', reason: '太陽（参）' };
       }
     }
 
     if (currentForm === Form.OpoOpo || currentForm === Form.Formless || currentForm === Form.None) {
-      return buffs.leadenFist ? 'bootshine' : 'dragon_kick';
+      return { id: buffs.leadenFist ? 'pouncing_barrage' : 'dragon_kick', reason: buffs.leadenFist ? '猿舞連撃' : '双竜脚' };
     }
     if (currentForm === Form.Raptor) {
-      return buffs.disciplinedFist < 5 ? 'twin_snakes' : 'true_strike';
+      return { id: buffs.disciplinedFist < 6 ? 'twin_snakes' : 'dragon_jaw', reason: '功力維持' };
     }
     if (currentForm === Form.Coeurl) {
-      return buffs.demolishDoT < 4 ? 'demolish' : 'snap_punch';
+      return { id: buffs.demolishDoT < 6 ? 'demolish' : 'tiger_claw', reason: '破砕維持' };
     }
-    return null;
-  }, [state, currentBlitz]);
 
-  const triggerError = () => {
+    return { id: null, reason: '' };
+  }, [state, currentBlitz, canWinds]);
+
+  const recommendedSkillId = recommendation.id;
+
+  const triggerError = (msg: string) => {
     setIsError(true);
     sounds.playError();
     setTimeout(() => setIsError(false), 200);
-    const targetName = MONK_SKILLS.find(s => s.id === recommendedSkillId)?.name || currentBlitz?.name || "次の一手";
-    setFeedback(`型が違う！「${targetName}」を打つべし。`);
-    if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+    setFeedback(msg);
   };
 
   const executeSkill = useCallback((skill: Skill | any) => {
@@ -118,22 +101,22 @@ const App: React.FC = () => {
     if (!skill.isAbility && isGCD) return;
 
     if (skill.id === 'forbidden_chakra' && state.chakraCount < 5) {
-      triggerError();
-      return;
+      triggerError("闘気が足りぬ。"); return;
     }
     
-    if (!skill.isAbility && state.buffs.perfectBalanceStacks === 0 && !['elixir_field', 'rising_phoenix', 'phantom_rush', 'celestial_revolution'].includes(skill.id)) {
+    if (!skill.isAbility && state.buffs.perfectBalanceStacks === 0 && !['elixir_burst', 'rising_phoenix', 'phantom_rush', 'celestial_revolution'].includes(skill.id)) {
       if (!skill.formRequired.includes(state.currentForm)) {
-        triggerError();
+        triggerError(`型が違う！次は「${MONK_SKILLS.find(s => s.id === recommendedSkillId)?.name}」だ。`);
         return;
       }
     }
 
-    if (skill.id === 'forbidden_chakra' || skill.id === 'riddle_of_fire' || skill.id === 'perfect_balance' || skill.id === 'formless_shift' || currentBlitz) {
-      sounds.playSuccess();
-    } else {
-      sounds.playSkill();
+    if (skill.id === 'winds_of_reply' && !canWinds) {
+      triggerError("真空波はまだだ。"); return;
     }
+
+    if (skill.isAbility || currentBlitz) sounds.playSuccess();
+    else sounds.playSkill();
 
     if (!skill.isAbility) {
       setIsGCD(true);
@@ -146,14 +129,19 @@ const App: React.FC = () => {
       let newNadi = [...prev.nadi];
       let nextForm = skill.formGranted;
       let newChakra = prev.chakraCount;
+      let newPhase = prev.phase;
 
-      if (!skill.isAbility && newChakra < 5) {
-        if (Math.random() > 0.3) newChakra++;
-      }
+      if (prev.history.length >= OPENER_SEQUENCE.length) newPhase = 'standard';
+      if (!skill.isAbility && newChakra < 5 && Math.random() > 0.4) newChakra++;
 
       if (skill.id === 'forbidden_chakra') {
         newChakra = 0;
         return { ...prev, chakraCount: newChakra, history: [...prev.history, skill.name] };
+      }
+
+      if (skill.id === 'winds_of_reply') {
+        setCanWinds(false);
+        return { ...prev, history: [...prev.history, skill.name] };
       }
 
       if (skill.id === 'riddle_of_fire') {
@@ -164,22 +152,19 @@ const App: React.FC = () => {
         newBuffs.perfectBalanceStacks = 3;
         return { ...prev, buffs: newBuffs, history: [...prev.history, skill.name] };
       }
-      if (skill.id === 'formless_shift') {
-        return { ...prev, currentForm: Form.Formless, history: [...prev.history, skill.name] };
-      }
       
-      // 必殺技実行
-      if (['elixir_field', 'rising_phoenix', 'phantom_rush', 'celestial_revolution'].includes(skill.id)) {
-        if (skill.id === 'elixir_field') !newNadi.includes(NadiType.Lunar) && newNadi.push(NadiType.Lunar);
+      if (['elixir_burst', 'rising_phoenix', 'phantom_rush', 'celestial_revolution'].includes(skill.id)) {
+        if (skill.id === 'elixir_burst') !newNadi.includes(NadiType.Lunar) && newNadi.push(NadiType.Lunar);
         if (skill.id === 'rising_phoenix') !newNadi.includes(NadiType.Solar) && newNadi.push(NadiType.Solar);
         if (skill.id === 'phantom_rush') newNadi = [];
         newBeastChakra = [];
         newBuffs.perfectBalanceStacks = 0;
-        return { ...prev, nadi: newNadi, beastChakra: newBeastChakra, buffs: newBuffs, currentForm: Form.Formless, history: [...prev.history, skill.name] };
+        setCanWinds(true);
+        return { ...prev, nadi: newNadi, beastChakra: newBeastChakra, buffs: newBuffs, currentForm: Form.Formless, history: [...prev.history, skill.name], phase: newPhase };
       }
 
       if (skill.id === 'dragon_kick') newBuffs.leadenFist = true;
-      if (skill.id === 'bootshine') newBuffs.leadenFist = false;
+      if (skill.id === 'pouncing_barrage') newBuffs.leadenFist = false;
       if (skill.id === 'twin_snakes') newBuffs.disciplinedFist = 15;
       if (skill.id === 'demolish') newBuffs.demolishDoT = 18;
 
@@ -195,13 +180,14 @@ const App: React.FC = () => {
         buffs: newBuffs,
         beastChakra: newBeastChakra,
         chakraCount: newChakra,
-        history: [...prev.history, skill.name]
+        history: [...prev.history, skill.name],
+        phase: newPhase
       };
     });
-  }, [isGCD, state, recommendedSkillId, currentBlitz]);
+  }, [isGCD, state, recommendedSkillId, currentBlitz, canWinds]);
 
   useEffect(() => {
-    if (state.history.length > 0 && state.history.length % 10 === 0) {
+    if (state.history.length > 0 && state.history.length % 15 === 0) {
       const updateFeedback = async () => {
         setIsThinking(true);
         const advice = await getMonkFeedback(state.history, state.currentForm);
@@ -212,94 +198,100 @@ const App: React.FC = () => {
     }
   }, [state.history.length]);
 
-  const lastSkills = useMemo(() => state.history.slice(-5).reverse(), [state.history]);
-
   return (
     <div 
       onClick={unlockAudio}
       className={`fixed inset-0 transition-all duration-300 ${isError ? 'bg-red-900/40' : 'bg-[#020617]'} text-slate-100 p-4 safe-pt flex flex-col items-center select-none overflow-hidden`}
     >
       <header className="w-full max-w-lg flex flex-col items-center mb-1">
-        <h1 className="text-xl font-black tracking-tighter bg-gradient-to-r from-yellow-400 via-white to-orange-500 bg-clip-text text-transparent italic">
-          MONK DOJO <span className="text-xs ml-1">v2.5</span>
-        </h1>
-        <div className="flex gap-1 mt-2 h-6 items-center">
-          {lastSkills.map((s, i) => (
-            <div key={i} className={`text-[7px] px-2 py-0.5 rounded-full border border-white/10 bg-white/5 transition-all ${i === 0 ? 'opacity-100 scale-110 border-yellow-500/50' : 'opacity-20 scale-90'}`}>
-              {s}
-            </div>
-          ))}
+        <div className="flex items-center gap-2">
+           <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${state.phase === 'opener' ? 'bg-blue-600' : 'bg-green-600'}`}>
+             {state.phase === 'opener' ? 'OPENER' : 'LOOP'}
+           </span>
+           <h1 className="text-xl font-black tracking-tighter bg-gradient-to-r from-yellow-400 via-white to-orange-500 bg-clip-text text-transparent italic">
+            MONK DOJO <span className="text-xs ml-1">v7.0</span>
+          </h1>
         </div>
       </header>
 
-      <main className="w-full max-w-lg flex flex-col gap-4 flex-1 overflow-y-auto pb-64 pt-2 px-1">
-        {/* Blitz / Recommendation Overlay */}
-        <div className={`relative flex flex-col items-center py-6 rounded-[2.5rem] border-2 transition-all duration-700 min-h-[140px] justify-center ${
-          currentBlitz 
-            ? 'bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950 border-white shadow-[0_0_60px_rgba(99,102,241,0.5)] scale-105 z-40' 
+      <main className="w-full max-w-lg flex flex-col gap-2 flex-1 overflow-y-auto pb-[280px] pt-1 px-1">
+        {/* Compact Guidance HUD */}
+        <div className={`relative flex flex-col items-center py-2 rounded-2xl border transition-all duration-700 min-h-[90px] justify-center ${
+          currentBlitz || canWinds
+            ? 'bg-white/5 border-white shadow-[0_0_50px_rgba(255,255,255,0.1)] scale-[1.01] z-40' 
             : 'bg-white/5 border-white/10'
         }`}>
-          <div className="absolute top-3 flex items-center gap-1.5">
-            <div className={`w-2 h-2 rounded-full ${currentBlitz ? 'bg-white animate-ping' : 'bg-slate-500'}`} />
-            <span className={`text-[10px] uppercase font-black tracking-[0.2em] ${currentBlitz ? 'text-white' : 'text-slate-400'}`}>
-              {currentBlitz ? 'Masterful Blitz Available' : 
-               state.buffs.perfectBalanceStacks > 0 ? `Perfect Balance: ${state.beastChakra.length}/3` : 
-               'Recommended Action'}
-            </span>
-          </div>
-          
-          {currentBlitz ? (
-            <button 
-              onClick={(e) => { e.stopPropagation(); executeSkill(currentBlitz); }}
-              disabled={isGCD}
-              className={`group relative mt-2 px-14 py-6 rounded-3xl font-black text-3xl border-4 border-white/80 overflow-hidden active:scale-95 transition-all ${currentBlitz.color}`}
-            >
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-active:translate-y-0 transition-transform" />
-              <div className="relative flex flex-col items-center gap-1">
-                <span className="text-5xl animate-bounce mb-1">{currentBlitz.icon}</span>
-                <span className="drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] tracking-tighter uppercase">{currentBlitz.name}</span>
-              </div>
-            </button>
+          {canWinds ? (
+            <div className="flex flex-col items-center">
+               <span className="text-4xl mb-0.5 filter drop-shadow-[0_0_12px_rgba(34,211,238,0.5)]">🌪️</span>
+               <div className="bg-cyan-900/40 px-3 py-0.5 rounded-lg border border-cyan-400/30">
+                  <span className="text-sm text-cyan-200 font-black italic">真空波</span>
+               </div>
+            </div>
+          ) : currentBlitz ? (
+            <div className="flex flex-col items-center animate-bounce">
+               <span className="text-4xl mb-0.5 filter drop-shadow-[0_0_12px_rgba(255,255,255,0.5)]">{currentBlitz.icon}</span>
+               <div className="bg-black/60 px-3 py-0.5 rounded-lg border border-white/20 backdrop-blur-xl">
+                  <span className="text-sm text-white font-black italic tracking-tighter">{currentBlitz.name}</span>
+               </div>
+            </div>
           ) : (
-            <div className={`mt-4 text-3xl font-black italic tracking-tighter ${recommendedSkillId === 'perfect_balance' ? 'text-indigo-400 animate-pulse text-4xl' : 'text-white'}`}>
-              {MONK_SKILLS.find(s => s.id === recommendedSkillId)?.name || '---'}
-              {recommendedSkillId === 'perfect_balance' && <span className="block text-xs text-center mt-1 uppercase tracking-widest text-white/50">Use Perfect Balance!</span>}
+            <div className="flex flex-col items-center gap-0">
+              <div className={`text-2xl font-black italic tracking-tighter text-center ${recommendedSkillId === 'perfect_balance' ? 'text-indigo-400 animate-pulse' : 'text-white'}`}>
+                {MONK_SKILLS.find(s => s.id === recommendedSkillId)?.name || '---'}
+              </div>
+              <div className="mt-0.5 px-2.5 py-0.5 bg-yellow-500/10 rounded-full border border-yellow-500/20">
+                <span className="text-[9px] text-yellow-500 font-black uppercase">{recommendation.reason}</span>
+              </div>
             </div>
           )}
         </div>
 
         <StatsPanel state={state} feedback={feedback} isThinking={isThinking} />
         
-        <div className="flex justify-center mt-2 opacity-30 hover:opacity-100 transition-opacity">
-          <button onClick={(e) => { e.stopPropagation(); sounds.playClick(220); setState(INITIAL_ROTATION_STATE); }} className="text-[9px] px-5 py-2 bg-slate-800/50 text-slate-400 rounded-full border border-slate-700 active:bg-slate-700 uppercase tracking-widest font-bold">Reset Training</button>
+        <div className="flex justify-center mt-0 opacity-5 hover:opacity-30 transition-opacity">
+          <button onClick={(e) => { e.stopPropagation(); sounds.playClick(220); setState(INITIAL_ROTATION_STATE); setCanWinds(false); setFeedback("一から叩き直す。構えろ。"); }} className="text-[7px] px-2 py-0.5 bg-slate-800/20 text-slate-600 rounded-full border border-slate-700/30 active:bg-slate-700 uppercase tracking-widest font-bold">Reset</button>
         </div>
       </main>
 
-      {/* Button Tray */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 pb-[calc(1rem+var(--sab))] bg-slate-950/95 backdrop-blur-3xl border-t border-white/10 z-50">
-        <div className="max-w-lg mx-auto flex flex-col gap-4">
-          {/* oGCD / Abilities Row */}
-          <div className="flex justify-center gap-2">
-            {MONK_SKILLS.filter(s => s.isAbility).map(skill => {
-              const isAvailable = skill.id === 'forbidden_chakra' ? state.chakraCount === 5 : true;
-              const isRecommended = skill.id === recommendedSkillId;
+      {/* Primary Interaction Area - Tightened up */}
+      <div className="fixed bottom-0 left-0 right-0 p-2 pb-[calc(0.5rem+var(--sab))] bg-slate-950/98 backdrop-blur-3xl border-t border-white/10 z-50">
+        <div className="max-w-lg mx-auto flex flex-col gap-2">
+          {/* Top Row: Blitz & OGCDs */}
+          <div className="flex justify-between gap-1">
+            <button
+              onClick={(e) => { e.stopPropagation(); currentBlitz && executeSkill(currentBlitz); }}
+              className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 flex-1 shadow-lg transition-all ${
+                currentBlitz 
+                  ? `${currentBlitz.color} scale-[1.02] z-10 border-white ring-4 ring-white/10` 
+                  : 'bg-slate-900 border-slate-800 opacity-20 pointer-events-none'
+              }`}
+            >
+              <span className="text-xl">{currentBlitz ? currentBlitz.icon : '✨'}</span>
+              <span className="text-[7px] font-black uppercase mt-0.5">必殺技</span>
+            </button>
+
+            {['winds_of_reply', 'perfect_balance', 'riddle_of_fire', 'forbidden_chakra'].map(id => {
+              const skill = MONK_SKILLS.find(s => s.id === id)!;
+              const isAvailable = id === 'forbidden_chakra' ? state.chakraCount === 5 : (id === 'winds_of_reply' ? canWinds : true);
+              const isRecommended = recommendedSkillId === id;
               return (
                 <button
-                  key={skill.id}
+                  key={id}
                   onClick={(e) => { e.stopPropagation(); executeSkill(skill); }}
-                  className={`flex flex-col items-center p-2 rounded-2xl border-2 ${skill.color} flex-1 max-w-[100px] shadow-lg active:scale-90 active:brightness-125 transition-all ${
+                  className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 ${skill.color} flex-1 shadow-lg active:scale-95 transition-all ${
                     !isAvailable ? 'opacity-20 grayscale pointer-events-none' : ''
-                  } ${isRecommended ? 'ring-4 ring-white border-white scale-110 z-10 animate-pulse' : 'border-white/10'}`}
+                  } ${isRecommended ? 'ring-2 ring-white border-white scale-[1.02] z-10' : 'border-white/10'}`}
                 >
-                  <span className="text-2xl">{skill.icon}</span>
-                  <span className="text-[8px] font-black uppercase tracking-tighter whitespace-nowrap mt-1">{skill.name}</span>
+                  <span className="text-xl">{skill.icon}</span>
+                  <span className="text-[7px] font-black uppercase mt-0.5 leading-none text-center">{skill.name}</span>
                 </button>
               );
             })}
           </div>
           
           {/* Main Combo Grid */}
-          <div className="grid grid-cols-6 gap-1.5">
+          <div className="grid grid-cols-6 gap-1">
             {MONK_SKILLS.filter(s => !s.isAbility).map(skill => (
               <SkillButton
                 key={skill.id}
@@ -313,10 +305,9 @@ const App: React.FC = () => {
           </div>
         </div>
         
-        {/* Global Cool Down Progress Bar */}
         {isGCD && (
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-blue-500/10 overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-blue-600 via-white to-cyan-400 animate-[gcd_1.95s_linear_forwards] shadow-[0_0_10px_#3b82f6]" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-blue-500/10 overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-blue-600 via-white to-cyan-400 animate-[gcd_1.95s_linear_forwards]" />
           </div>
         )}
       </div>

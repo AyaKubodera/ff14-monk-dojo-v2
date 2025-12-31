@@ -1,10 +1,9 @@
 
-import { Form, Skill, BeastChakraType } from './types';
+import { Form, Skill, BeastChakraType, RotationState } from './types';
 
 export const MONK_SKILLS: Skill[] = [
-  // Opo-opo (壱の型)
   {
-    id: 'bootshine',
+    id: 'pouncing_barrage',
     name: '猿舞連撃',
     formRequired: [Form.OpoOpo, Form.Formless, Form.None],
     formGranted: Form.Raptor,
@@ -21,9 +20,8 @@ export const MONK_SKILLS: Skill[] = [
     icon: '🐉',
     color: 'bg-yellow-600'
   },
-  // Raptor (弐 of 型)
   {
-    id: 'true_strike',
+    id: 'dragon_jaw',
     name: '竜頷正拳撃',
     formRequired: [Form.Raptor, Form.Formless],
     formGranted: Form.Coeurl,
@@ -40,9 +38,8 @@ export const MONK_SKILLS: Skill[] = [
     icon: '🐍',
     color: 'bg-orange-600'
   },
-  // Coeurl (参 of 型)
   {
-    id: 'snap_punch',
+    id: 'tiger_claw',
     name: '虎襲崩拳',
     formRequired: [Form.Coeurl, Form.Formless],
     formGranted: Form.OpoOpo,
@@ -59,7 +56,6 @@ export const MONK_SKILLS: Skill[] = [
     icon: '💥',
     color: 'bg-red-600'
   },
-  // oGCDs / Abilities (アビリティ)
   {
     id: 'forbidden_chakra',
     name: '陰陽闘気斬',
@@ -79,15 +75,6 @@ export const MONK_SKILLS: Skill[] = [
     color: 'bg-indigo-600'
   },
   {
-    id: 'formless_shift',
-    name: '演武',
-    formRequired: [],
-    formGranted: Form.Formless,
-    isAbility: true,
-    icon: '🥋',
-    color: 'bg-emerald-600'
-  },
-  {
     id: 'riddle_of_fire',
     name: '紅蓮の極意',
     formRequired: [],
@@ -95,10 +82,36 @@ export const MONK_SKILLS: Skill[] = [
     isAbility: true,
     icon: '🔥',
     color: 'bg-red-800'
+  },
+  {
+    id: 'winds_of_reply',
+    name: '真空波',
+    formRequired: [],
+    formGranted: Form.None,
+    isAbility: true,
+    icon: '🌪️',
+    color: 'bg-cyan-600 shadow-[0_0_20px_rgba(6,182,212,0.5)]'
   }
 ];
 
-export const INITIAL_ROTATION_STATE = {
+/**
+ * LV100 黄金のレガシー版 最新オープナー
+ * 真空波（Winds of Reply）を含む
+ */
+export const OPENER_SEQUENCE = [
+  'dragon_kick',
+  'twin_snakes',
+  'demolish',
+  'riddle_of_fire',
+  'perfect_balance',
+  'dragon_kick',
+  'pouncing_barrage',
+  'dragon_kick',
+  'elixir_burst', 
+  'winds_of_reply'
+];
+
+export const INITIAL_ROTATION_STATE: RotationState = {
   currentForm: Form.Formless,
   buffs: {
     disciplinedFist: 0,
@@ -111,5 +124,6 @@ export const INITIAL_ROTATION_STATE = {
   nadi: [],
   chakraCount: 0,
   comboCount: 0,
-  history: []
+  history: [],
+  phase: 'opener'
 };

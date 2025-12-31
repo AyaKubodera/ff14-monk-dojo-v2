@@ -24,17 +24,17 @@ export interface Skill {
   formRequired: Form[];
   formGranted: Form;
   beastChakraGranted?: BeastChakraType;
-  isAbility?: boolean; // oGCD
+  isAbility?: boolean;
   icon: string;
   color: string;
 }
 
 export interface BuffStatus {
-  disciplinedFist: number; // 功力
-  leadenFist: boolean;      // 連撃効果アップ
-  demolishDoT: number;    // 破砕
-  riddleOfFire: number;   // 紅蓮の極意
-  perfectBalanceStacks: number; // 踏鳴スタック
+  disciplinedFist: number;
+  leadenFist: boolean;
+  demolishDoT: number;
+  riddleOfFire: number;
+  perfectBalanceStacks: number;
 }
 
 export interface RotationState {
@@ -42,7 +42,8 @@ export interface RotationState {
   buffs: BuffStatus;
   beastChakra: BeastChakraType[];
   nadi: NadiType[];
-  chakraCount: number; // 闘気 (0-5)
+  chakraCount: number;
   comboCount: number;
   history: string[];
+  phase: 'opener' | 'standard';
 }
