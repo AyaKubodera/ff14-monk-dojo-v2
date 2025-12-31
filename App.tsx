@@ -203,45 +203,45 @@ const App: React.FC = () => {
       onClick={unlockAudio}
       className={`fixed inset-0 transition-all duration-300 ${isError ? 'bg-red-900/40' : 'bg-[#020617]'} text-slate-100 p-4 safe-pt flex flex-col items-center select-none overflow-hidden`}
     >
-      <header className="w-full max-w-lg flex flex-col items-center mb-1">
+      <header className="w-full max-w-lg flex flex-col items-center mb-0.5">
         <div className="flex items-center gap-2">
            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${state.phase === 'opener' ? 'bg-blue-600' : 'bg-green-600'}`}>
              {state.phase === 'opener' ? 'OPENER' : 'LOOP'}
            </span>
            <h1 className="text-xl font-black tracking-tighter bg-gradient-to-r from-yellow-400 via-white to-orange-500 bg-clip-text text-transparent italic">
-            MONK DOJO <span className="text-xs ml-1">v7.0</span>
+            MONK DOJO <span className="text-xs ml-1">v8.0</span>
           </h1>
         </div>
       </header>
 
-      <main className="w-full max-w-lg flex flex-col gap-2 flex-1 overflow-y-auto pb-[280px] pt-1 px-1">
-        {/* Compact Guidance HUD */}
-        <div className={`relative flex flex-col items-center py-2 rounded-2xl border transition-all duration-700 min-h-[90px] justify-center ${
+      <main className="w-full max-w-lg flex flex-col gap-1.5 flex-1 overflow-y-auto pb-[260px] pt-1 px-1">
+        {/* Guidance HUD - More Compact */}
+        <div className={`relative flex flex-col items-center py-1.5 rounded-2xl border transition-all duration-700 min-h-[80px] justify-center ${
           currentBlitz || canWinds
             ? 'bg-white/5 border-white shadow-[0_0_50px_rgba(255,255,255,0.1)] scale-[1.01] z-40' 
             : 'bg-white/5 border-white/10'
         }`}>
           {canWinds ? (
             <div className="flex flex-col items-center">
-               <span className="text-4xl mb-0.5 filter drop-shadow-[0_0_12px_rgba(34,211,238,0.5)]">🌪️</span>
-               <div className="bg-cyan-900/40 px-3 py-0.5 rounded-lg border border-cyan-400/30">
-                  <span className="text-sm text-cyan-200 font-black italic">真空波</span>
+               <span className="text-3xl mb-0.5 filter drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">🌪️</span>
+               <div className="bg-cyan-900/40 px-2 py-0.5 rounded border border-cyan-400/30">
+                  <span className="text-[12px] text-cyan-200 font-black italic">真空波</span>
                </div>
             </div>
           ) : currentBlitz ? (
             <div className="flex flex-col items-center animate-bounce">
-               <span className="text-4xl mb-0.5 filter drop-shadow-[0_0_12px_rgba(255,255,255,0.5)]">{currentBlitz.icon}</span>
-               <div className="bg-black/60 px-3 py-0.5 rounded-lg border border-white/20 backdrop-blur-xl">
-                  <span className="text-sm text-white font-black italic tracking-tighter">{currentBlitz.name}</span>
+               <span className="text-3xl mb-0.5 filter drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">{currentBlitz.icon}</span>
+               <div className="bg-black/60 px-2 py-0.5 rounded border border-white/20 backdrop-blur-xl">
+                  <span className="text-[12px] text-white font-black italic tracking-tighter">{currentBlitz.name}</span>
                </div>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-0">
-              <div className={`text-2xl font-black italic tracking-tighter text-center ${recommendedSkillId === 'perfect_balance' ? 'text-indigo-400 animate-pulse' : 'text-white'}`}>
+              <div className={`text-xl font-black italic tracking-tighter text-center ${recommendedSkillId === 'perfect_balance' ? 'text-indigo-400 animate-pulse' : 'text-white'}`}>
                 {MONK_SKILLS.find(s => s.id === recommendedSkillId)?.name || '---'}
               </div>
-              <div className="mt-0.5 px-2.5 py-0.5 bg-yellow-500/10 rounded-full border border-yellow-500/20">
-                <span className="text-[9px] text-yellow-500 font-black uppercase">{recommendation.reason}</span>
+              <div className="mt-0.5 px-2 py-0.5 bg-yellow-500/10 rounded-full border border-yellow-500/20">
+                <span className="text-[8px] text-yellow-500 font-black uppercase tracking-tight">{recommendation.reason}</span>
               </div>
             </div>
           )}
@@ -249,21 +249,21 @@ const App: React.FC = () => {
 
         <StatsPanel state={state} feedback={feedback} isThinking={isThinking} />
         
-        <div className="flex justify-center mt-0 opacity-5 hover:opacity-30 transition-opacity">
-          <button onClick={(e) => { e.stopPropagation(); sounds.playClick(220); setState(INITIAL_ROTATION_STATE); setCanWinds(false); setFeedback("一から叩き直す。構えろ。"); }} className="text-[7px] px-2 py-0.5 bg-slate-800/20 text-slate-600 rounded-full border border-slate-700/30 active:bg-slate-700 uppercase tracking-widest font-bold">Reset</button>
+        <div className="flex justify-center mt-0 opacity-0 hover:opacity-10 transition-opacity">
+          <button onClick={(e) => { e.stopPropagation(); sounds.playClick(220); setState(INITIAL_ROTATION_STATE); setCanWinds(false); setFeedback("一から叩き直す。構えろ。"); }} className="text-[6px] px-2 py-0.5 bg-slate-800/10 text-slate-700 rounded-full border border-slate-800/20 active:bg-slate-700 uppercase tracking-widest font-bold">Reset</button>
         </div>
       </main>
 
-      {/* Primary Interaction Area - Tightened up */}
-      <div className="fixed bottom-0 left-0 right-0 p-2 pb-[calc(0.5rem+var(--sab))] bg-slate-950/98 backdrop-blur-3xl border-t border-white/10 z-50">
-        <div className="max-w-lg mx-auto flex flex-col gap-2">
+      {/* Primary Interaction Area - Tightened to the extreme */}
+      <div className="fixed bottom-0 left-0 right-0 p-1.5 pb-[calc(0.5rem+var(--sab))] bg-slate-950/98 backdrop-blur-3xl border-t border-white/10 z-50">
+        <div className="max-w-lg mx-auto flex flex-col gap-1.5">
           {/* Top Row: Blitz & OGCDs */}
           <div className="flex justify-between gap-1">
             <button
               onClick={(e) => { e.stopPropagation(); currentBlitz && executeSkill(currentBlitz); }}
-              className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 flex-1 shadow-lg transition-all ${
+              className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border-2 flex-1 shadow-lg transition-all ${
                 currentBlitz 
-                  ? `${currentBlitz.color} scale-[1.02] z-10 border-white ring-4 ring-white/10` 
+                  ? `${currentBlitz.color} scale-[1.03] z-10 border-white ring-4 ring-white/10` 
                   : 'bg-slate-900 border-slate-800 opacity-20 pointer-events-none'
               }`}
             >
@@ -279,9 +279,9 @@ const App: React.FC = () => {
                 <button
                   key={id}
                   onClick={(e) => { e.stopPropagation(); executeSkill(skill); }}
-                  className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 ${skill.color} flex-1 shadow-lg active:scale-95 transition-all ${
+                  className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border-2 ${skill.color} flex-1 shadow-lg active:scale-95 transition-all ${
                     !isAvailable ? 'opacity-20 grayscale pointer-events-none' : ''
-                  } ${isRecommended ? 'ring-2 ring-white border-white scale-[1.02] z-10' : 'border-white/10'}`}
+                  } ${isRecommended ? 'ring-2 ring-white border-white scale-[1.03] z-10' : 'border-white/10'}`}
                 >
                   <span className="text-xl">{skill.icon}</span>
                   <span className="text-[7px] font-black uppercase mt-0.5 leading-none text-center">{skill.name}</span>
