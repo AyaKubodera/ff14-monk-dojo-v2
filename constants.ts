@@ -2,7 +2,7 @@
 import { Form, Skill, BeastChakraType } from './types';
 
 export const MONK_SKILLS: Skill[] = [
-  // Opo-opo
+  // Opo-opo (壱の型)
   {
     id: 'bootshine',
     name: '猿舞連撃',
@@ -21,7 +21,7 @@ export const MONK_SKILLS: Skill[] = [
     icon: '🐉',
     color: 'bg-yellow-600'
   },
-  // Raptor
+  // Raptor (弐 of 型)
   {
     id: 'true_strike',
     name: '竜頷正拳撃',
@@ -40,7 +40,7 @@ export const MONK_SKILLS: Skill[] = [
     icon: '🐍',
     color: 'bg-orange-600'
   },
-  // Coeurl
+  // Coeurl (参 of 型)
   {
     id: 'snap_punch',
     name: '虎襲崩拳',
@@ -59,7 +59,16 @@ export const MONK_SKILLS: Skill[] = [
     icon: '💥',
     color: 'bg-red-600'
   },
-  // oGCDs / Abilities
+  // oGCDs / Abilities (アビリティ)
+  {
+    id: 'forbidden_chakra',
+    name: '陰陽闘気斬',
+    formRequired: [],
+    formGranted: Form.None,
+    isAbility: true,
+    icon: '⚡',
+    color: 'bg-yellow-400 text-black'
+  },
   {
     id: 'perfect_balance',
     name: '踏鳴',
@@ -68,6 +77,15 @@ export const MONK_SKILLS: Skill[] = [
     isAbility: true,
     icon: '⚖️',
     color: 'bg-indigo-600'
+  },
+  {
+    id: 'formless_shift',
+    name: '演武',
+    formRequired: [],
+    formGranted: Form.Formless,
+    isAbility: true,
+    icon: '🥋',
+    color: 'bg-emerald-600'
   },
   {
     id: 'riddle_of_fire',
@@ -91,6 +109,7 @@ export const INITIAL_ROTATION_STATE = {
   },
   beastChakra: [],
   nadi: [],
+  chakraCount: 0,
   comboCount: 0,
   history: []
 };

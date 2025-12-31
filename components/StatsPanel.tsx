@@ -11,35 +11,56 @@ interface StatsPanelProps {
 const StatsPanel: React.FC<StatsPanelProps> = ({ state, feedback, isThinking }) => {
   return (
     <div className="w-full flex flex-col gap-4">
-      {/* Nadi and Beast Chakra Display */}
-      <div className="flex justify-between items-end gap-2 bg-slate-900/50 p-3 rounded-xl border border-slate-700">
-        <div className="flex flex-col gap-2">
-          <span className="text-[10px] text-slate-500 font-bold uppercase">Nadi</span>
-          <div className="flex gap-2">
-            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${state.nadi.includes(NadiType.Lunar) ? 'bg-indigo-500 border-indigo-300 shadow-[0_0_10px_#6366f1]' : 'border-slate-800 bg-slate-950'}`}>
-              🌙
+      {/* --- Monk Job Gauge (Thematic UI) --- */}
+      <div className="relative bg-gradient-to-b from-slate-800 to-slate-950 p-4 rounded-2xl border-2 border-yellow-900/30 shadow-2xl overflow-hidden">
+        {/* Decorative Background Elements */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 blur-3xl rounded-full" />
+        
+        <div className="relative flex flex-col gap-4">
+          {/* Top row: Nadi and Beast Chakra */}
+          <div className="flex justify-between items-center">
+            {/* Nadi (Orbs) */}
+            <div className="flex gap-3">
+              <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${state.nadi.includes(NadiType.Lunar) ? 'bg-indigo-600 border-indigo-300 shadow-[0_0_15px_#6366f1] scale-110' : 'border-slate-700 bg-slate-900 opacity-40'}`}>
+                <span className="text-xl">🌙</span>
+              </div>
+              <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${state.nadi.includes(NadiType.Solar) ? 'bg-orange-600 border-orange-300 shadow-[0_0_15px_#f97316] scale-110' : 'border-slate-700 bg-slate-900 opacity-40'}`}>
+                <span className="text-xl">☀️</span>
+              </div>
             </div>
-            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${state.nadi.includes(NadiType.Solar) ? 'bg-orange-500 border-orange-300 shadow-[0_0_10px_#f97316]' : 'border-slate-800 bg-slate-950'}`}>
-              ☀️
+
+            {/* Beast Chakra (Masterful Blitz Symbols) */}
+            <div className="flex gap-1.5 p-1 bg-black/40 rounded-lg border border-white/10">
+              {[0, 1, 2].map(i => {
+                const chakra = state.beastChakra[i];
+                return (
+                  <div key={i} className={`w-9 h-9 flex items-center justify-center text-xl transition-all duration-300 ${
+                    chakra ? 'scale-110 opacity-100' : 'opacity-20 grayscale scale-90'
+                  }`}>
+                    {chakra === BeastChakraType.Opo ? '🐒' : 
+                     chakra === BeastChakraType.Raptor ? '🐲' : 
+                     chakra === BeastChakraType.Coeurl ? '🐅' : '⚪'}
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
 
-        <div className="flex flex-col items-end gap-2">
-          <span className="text-[10px] text-slate-500 font-bold uppercase">Beast Chakra</span>
-          <div className="flex gap-1">
-            {[0, 1, 2].map(i => {
-              const chakra = state.beastChakra[i];
-              return (
-                <div key={i} className={`w-8 h-8 rounded-md border flex items-center justify-center text-lg ${
-                  chakra === BeastChakraType.Opo ? 'bg-yellow-500 border-yellow-300' :
-                  chakra === BeastChakraType.Raptor ? 'bg-orange-500 border-orange-300' :
-                  chakra === BeastChakraType.Coeurl ? 'bg-red-500 border-red-300' : 'bg-slate-950 border-slate-800'
-                }`}>
-                  {chakra === BeastChakraType.Opo ? '🐒' : chakra === BeastChakraType.Raptor ? '🐲' : chakra === BeastChakraType.Coeurl ? '🐅' : ''}
-                </div>
-              );
-            })}
+          {/* Bottom row: Meditation (闘気) */}
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div 
+                  key={i} 
+                  className={`w-4 h-4 rounded-full border transition-all duration-200 ${
+                    state.chakraCount >= i 
+                      ? 'bg-yellow-400 border-yellow-200 shadow-[0_0_8px_rgba(250,204,21,0.8)] scale-110' 
+                      : 'bg-slate-800 border-slate-700'
+                  } ${state.chakraCount === 5 ? 'animate-pulse' : ''}`}
+                />
+              ))}
+            </div>
+            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-yellow-500/60">Meditation Chakra</span>
           </div>
         </div>
       </div>
@@ -75,6 +96,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ state, feedback, isThinking }) 
         </div>
       </div>
 
+      {/* Advice Panel */}
       <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-700 shadow-xl backdrop-blur-sm">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">

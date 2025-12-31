@@ -42,6 +42,7 @@ export interface RotationState {
   buffs: BuffStatus;
   beastChakra: BeastChakraType[];
   nadi: NadiType[];
+  chakraCount: number; // 闘気 (0-5)
   comboCount: number;
   history: string[];
 }
